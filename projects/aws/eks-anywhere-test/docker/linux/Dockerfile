@@ -16,9 +16,10 @@ ARG BASE_IMAGE
 ARG BUILDER_IMAGE
 FROM $BUILDER_IMAGE as nginx-builder
 
-RUN set -x && \
+RUN set -x; \
     amazon-linux-extras enable nginx1; \
-    cp /etc/yum.repos.d/amzn2-extras.repo /newroot/etc/yum.repos.d/amzn2-extras.repo; \
+    ls /etc/yum.repos.d; \
+    cp /etc/yum.repos.d/amzn2-extras.repo /newroot/etc/yum.repos.d/amzn2-extras.repo || true; \
     # manually "install" systemd to avoid installing the entire dep tree
     clean_install systemd true true; \
     clean_install "nginx"; \
