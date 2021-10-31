@@ -17,14 +17,14 @@ ARG BUILDER_IMAGE
 FROM $BUILDER_IMAGE as nginx-builder
 
 RUN set -x && \
-    amazon-linux-extras enable nginx1 && \
-    cp /etc/yum.repos.d/amzn2-extras.repo /newroot/etc/yum.repos.d/amzn2-extras.repo && \
+    amazon-linux-extras enable nginx1; \
+    cp /etc/yum.repos.d/amzn2-extras.repo /newroot/etc/yum.repos.d/amzn2-extras.repo; \
     # manually "install" systemd to avoid installing the entire dep tree
-    clean_install systemd true true && \
-    clean_install "nginx" && \
+    clean_install systemd true true; \
+    clean_install "nginx"; \
     # remove unncessary utils and other binary deps that are not needed by nginx during runtime
-    remove_package "chkconfig gawk grep info make openssl p11-kit p11-kit-trust sed shadow-utils" && \
-    remove_package systemd true && \
+    remove_package "chkconfig gawk grep info make openssl p11-kit p11-kit-trust sed shadow-utils"; \
+    remove_package systemd true; \
     cleanup "nginx"
 
 # envsubst is needed to generate the config, but it comes from the gettext package
