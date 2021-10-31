@@ -17,7 +17,7 @@ ARG BUILDER_IMAGE
 FROM $BUILDER_IMAGE as nginx-builder
 
 RUN set -x; \
-    command -v amazon-linux-extras; echo $?; \
+    amazon-linux-extras; \
     amazon-linux-extras enable nginx1; echo $?; \
     ls /etc/yum.repos.d; \
     cp /etc/yum.repos.d/amzn2-extras.repo /newroot/etc/yum.repos.d/amzn2-extras.repo || true; \
