@@ -1,5 +1,5 @@
 # Disable built-in rules and variables
-MAKEFLAGS+=--no-builtin-rules --warn-undefined-variables
+MAKEFLAGS+=--no-builtin-rules --warn-undefined-variables --no-print-directory
 .SHELLFLAGS:=-eu -o pipefail -c
 .SUFFIXES:
 
