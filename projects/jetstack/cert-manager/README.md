@@ -61,3 +61,4 @@ from github during each build, and so we're sure nothing changes in the file eve
 1. Update checksums and attribution using `make update-attribution-checksums-docker PROJECT=jetstack/cert-manager` from the root of the repo.
 1. Update the version at the top of this Readme.
 1. Run `make generate` from the root of the repo to update the UPSTREAM_PROJECTS.yaml file.
+
