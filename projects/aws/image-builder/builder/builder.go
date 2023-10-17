@@ -293,11 +293,21 @@ func (b *BuildOptions) BuildImage() {
 	}
 
 	if outputArtifactPath != "" {
+		err = filepath.Walk(filepath.Join(upstreamImageBuilderProjectPath, "output"), func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			fmt.Println(path)
+			return nil
+		})
+		if err != nil {
+			log.Println(err)
+		}
 		// Moving artifacts from upstream directory to cwd
-		log.Println("Moving artifacts from build directory to current working directory")
+		log.Println("Moving image from build output location: %s to current working directory: %s", outputImageGlob[0], outputArtifactPath)
 		err = os.Rename(outputImageGlob[0], outputArtifactPath)
 		if err != nil {
-			log.Fatalf("Error moving output file to current working directory: %v", err)
+			log.Fatalf("Error moving image to current working directory: %v", err)
 		}
 	}
 
