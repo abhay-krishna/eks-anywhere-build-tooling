@@ -125,7 +125,7 @@ projects:
     repos:
       - name: helm
         versions:
-          - tag: v3.12.1
+          - tag: v3.13.2
             go_version: "1.20"
   - org: kube-vip
     repos:
@@ -293,5 +293,5 @@ projects:
     repos:
       - name: govmomi
         versions:
-          - tag: v0.30.5
-            go_version: "1.18"
+          - tag: v0.33.0
+            go_version: "1.20"
