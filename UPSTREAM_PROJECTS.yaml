@@ -294,4 +294,4 @@ projects:
       - name: govmomi
         versions:
           - tag: v0.30.5
-            go_version: "1.18"
+            go_version: "1.20"
