@@ -11,8 +11,8 @@ Signed-off-by: Vignesh Goutham Ganesh <vgg@amazon.com>
 ---
  .../capi/ansible/roles/sysprep/tasks/main.yml |  9 +++++
  images/capi/hack/ovf_template.xml             | 10 +----
- images/capi/packer/ova/packer-node.json       | 38 +++++++++++++------
- 3 files changed, 37 insertions(+), 20 deletions(-)
+ images/capi/packer/ova/packer-node.json       | 37 +++++++++++++------
+ 3 files changed, 36 insertions(+), 20 deletions(-)
 
 diff --git a/images/capi/ansible/roles/sysprep/tasks/main.yml b/images/capi/ansible/roles/sysprep/tasks/main.yml
 index a9fa954d5..a526528ea 100644
@@ -128,7 +128,7 @@ index 1b7b2d13d..e85dbe077 100644
      {
        "custom_data": {
          "build_date": "{{isotime}}",
-@@ -324,7 +333,11 @@
+@@ -324,7 +333,10 @@
          "vsphere-iso-base"
        ],
        "inline": [
@@ -136,12 +136,11 @@ index 1b7b2d13d..e85dbe077 100644
 +        "govc library.export /{{user `vsphere_library_name`}}/{{user `build_version`}}/{{user `build_version`}}.ovf {{user `output_dir`}}/{{user `build_version`}}.ovf",
 +        "govc library.export /{{user `vsphere_library_name`}}/{{user `build_version`}}/{{user `build_version`}}-1.vmdk {{user `output_dir`}}/{{user `build_version`}}-1.vmdk",
 +        "govc library.export /{{user `vsphere_library_name`}}/{{user `build_version`}}/{{user `build_version`}}-2.nvram {{user `output_dir`}}/{{user `build_version`}}-2.nvram",
-+        "govc library.rm /{{user `vsphere_library_name`}}/{{user `build_version`}}",
 +        "./hack/image-build-ova.py --vmx {{user `vmx_version`}} --eula ./hack/ovf_eula.txt --ovf_template ./hack/ovf_template.xml --vmdk_file {{user `build_version`}}-1.vmdk {{user `output_dir`}}"
        ],
        "name": "vsphere",
        "type": "shell-local"
-@@ -509,6 +522,7 @@
+@@ -509,6 +521,7 @@
      "resource_pool": "",
      "username": "",
      "vcenter_server": "",
