@@ -31,7 +31,7 @@ import (
 // Run contains the business logic to execute the `upgrade` subcommand.
 func Run(upgradeOptions *types.UpgradeOptions) error {
 	var currentRevision, latestRevision string
-	var projectHasPatches bool
+	var patchApplySucceeded bool
 	var updatedFiles []string
 
 	projectName := upgradeOptions.ProjectName
@@ -131,7 +131,6 @@ func Run(upgradeOptions *types.UpgradeOptions) error {
 		headBranchName = fmt.Sprintf("update-%s-%s", projectOrg, projectRepo)
 		baseBranchName = constants.MainBranchName
 		commitMessage = fmt.Sprintf("Bump %s to latest release", projectName)
-		pullRequestBody = fmt.Sprintf(constants.DefaultUpgradePullRequestBody, projectOrg, projectRepo, currentRevision, latestRevision)
 
 		// Load upstream projects tracker file.
 		upstreamProjectsTrackerFilePath := filepath.Join(buildToolingRepoPath, constants.UpstreamProjectsTrackerFile)
@@ -166,6 +165,8 @@ func Run(upgradeOptions *types.UpgradeOptions) error {
 				return fmt.Errorf("getting latest revision from GitHub: %v", err)
 			}
 		}
+
+		pullRequestBody = fmt.Sprintf(constants.DefaultUpgradePullRequestBody, projectOrg, projectRepo, currentRevision, latestRevision)
 
 		// Upgrade project if latest commit was made after current commit and the semver of the latest revision is
 		// greater than the semver of the current version.
@@ -258,28 +259,34 @@ func Run(upgradeOptions *types.UpgradeOptions) error {
 				updatedFiles = append(updatedFiles, projectReadmePath)
 
 				// Update the checksums file and attribution file(s) corresponding to the project.
-				if !projectHasPatches {
-					if _, err := os.Stat(filepath.Join(projectRootFilepath, constants.ChecksumsFile)); err == nil {
-						logger.Info("Updating project checksums and attribution files")
-						projectChecksumsFileRelativePath := filepath.Join(projectPath, constants.ChecksumsFile)
-						err = updateChecksumsAttributionFiles(projectRootFilepath)
-						if err != nil {
-							return fmt.Errorf("updating project checksums and attribution files: %v", err)
-						}
-						updatedFiles = append(updatedFiles, projectChecksumsFileRelativePath)
-
-						// Attribution files can have a binary name prefix so we use a common prefix regular expression
-						// and glob them to cover all possibilities.
-						projectAttributionFileGlob, err := filepath.Glob(filepath.Join(projectRootFilepath, constants.AttributionsFilePattern))
-						if err != nil {
-							return fmt.Errorf("finding filenames matching attribution file pattern [%s]: %v", constants.AttributionsFilePattern, err)
-						}
-						for _, attributionFile := range projectAttributionFileGlob {
-							attributionFileRelativePath, err := filepath.Rel(buildToolingRepoPath, attributionFile)
+				if projectHasPatches {
+					patchApplySucceeded, err := applyPatchesToRepo(projectRootFilepath)
+					if err != nil {
+						return fmt.Errorf("applying patches to repository: %v", err)
+					}
+					if patchApplySucceeded {
+						if _, err := os.Stat(filepath.Join(projectRootFilepath, constants.ChecksumsFile)); err == nil {
+							logger.Info("Updating project checksums and attribution files")
+							projectChecksumsFileRelativePath := filepath.Join(projectPath, constants.ChecksumsFile)
+							err = updateChecksumsAttributionFiles(projectRootFilepath)
 							if err != nil {
-								return fmt.Errorf("getting relative path for attribution file: %v", err)
+								return fmt.Errorf("updating project checksums and attribution files: %v", err)
 							}
-							updatedFiles = append(updatedFiles, attributionFileRelativePath)
+							updatedFiles = append(updatedFiles, projectChecksumsFileRelativePath)
+
+							// Attribution files can have a binary name prefix so we use a common prefix regular expression
+							// and glob them to cover all possibilities.
+							projectAttributionFileGlob, err := filepath.Glob(filepath.Join(projectRootFilepath, constants.AttributionsFilePattern))
+							if err != nil {
+								return fmt.Errorf("finding filenames matching attribution file pattern [%s]: %v", constants.AttributionsFilePattern, err)
+							}
+							for _, attributionFile := range projectAttributionFileGlob {
+								attributionFileRelativePath, err := filepath.Rel(buildToolingRepoPath, attributionFile)
+								if err != nil {
+									return fmt.Errorf("getting relative path for attribution file: %v", err)
+								}
+								updatedFiles = append(updatedFiles, attributionFileRelativePath)
+							}
 						}
 					}
 				}
@@ -347,7 +354,7 @@ func Run(upgradeOptions *types.UpgradeOptions) error {
 
 		// Create a pull request from the bramch in the head repository to the target branch in the aws/eks-anywhere-build-tooling repository.
 		logger.Info("Creating pull request with updated files")
-		err = github.CreatePullRequest(client, projectOrg, projectRepo, commitMessage, pullRequestBody, baseRepoOwner, baseBranchName, headRepoOwner, headBranchName, currentRevision, latestRevision, projectHasPatches)
+		err = github.CreatePullRequest(client, projectOrg, projectRepo, commitMessage, pullRequestBody, baseRepoOwner, baseBranchName, headRepoOwner, headBranchName, currentRevision, latestRevision, patchApplySucceeded)
 		if err != nil {
 			return fmt.Errorf("creating pull request to %s repository: %v", constants.BuildToolingRepoName, err)
 		}
@@ -518,6 +525,19 @@ func updateUpstreamProjectsTrackerFile(projectsList *types.ProjectsList, targetR
 	}
 
 	return nil
+}
+
+// applyPatchesToRepo runs a Make command to apply patches to the cloned repository of the project
+// being upgraded.
+func applyPatchesToRepo(projectRootFilepath string) (bool, error) {
+	applyPatchesCommandSequence := fmt.Sprintf("make -C %s patch-repo", projectRootFilepath)
+	applyPatchesCmd := exec.Command("bash", "-c", applyPatchesCommandSequence)
+	output, err := command.ExecCommand(applyPatchesCmd)
+	if err != nil {
+		return false, fmt.Errorf("running patch-repo Make command: %v", err)
+	}
+
+	return !strings.Contains(output, constants.FailedPatchApplyMarker), nil
 }
 
 // updateChecksumsAttributionFiles runs a Make command to update the checksums and attribution files

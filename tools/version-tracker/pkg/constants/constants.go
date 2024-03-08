@@ -30,6 +30,7 @@ const (
 	ChecksumsFile                           = "CHECKSUMS"
 	AttributionsFilePattern                 = "*ATTRIBUTION.txt"
 	PatchesDirectory                        = "patches"
+	FailedPatchApplyMarker                  = "patch does not apply"
 	BottlerocketReleasesFile                = "BOTTLEROCKET_RELEASES"
 	BottlerocketContainerMetadataFileFormat = "BOTTLEROCKET_%s_CONTAINER_METADATA"
 	BottlerocketHostContainersTOMLFile      = "sources/models/shared-defaults/public-host-containers.toml"
